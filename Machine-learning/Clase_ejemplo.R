@@ -192,3 +192,25 @@ plot(ROC.bosque)
 AUC.temporal <- performance(prediccion.bosque.ROC, "auc")
 AUC.bosque <- as.numeric(AUC.temporal@y.values)
 AUC.bosque
+
+library(xgboost)
+
+training.x <-model.matrix(Retenidos2020~., data = training)
+testing.x <- model.matrix(Retenidos2020~., data = testing)
+
+modelo.xgboost <-xgboost(data = data.matrix(training.x[,-1]), label = as.numeric(as.character(training$Retenidos2020)),
+                         eta = 0.1, max_depth = 20, nround = 50,objective ="binary:logistic")
+
+prediccion.xgboost <- predict(modelo.xgboost, newdata = testing.x[,-1],type = "response")
+
+confusionMatrix(as.factor(ifelse(prediccion.xgboost > 0.607, 1, 0)), testing$Retenidos2020, positive = "1")
+
+xgboost.errores <- prediction(prediccion.xgboost, testing$Retenidos2020)
+ROC.xgboost <- performance(xgboost.errores, "tpr", "fpr")
+plot(ROC.xgboost)
+plot(ROC.bosque, add = TRUE, col = "blue")
+legend("right", legend = c("xgboost", "randomforest"), col = c("black", "blue"), lty= 1:2, cex = 0.8)
+
+AUC.XGboost.temporal <- performance(xgboost.errores, "auc")
+AUC.xgboost <- as.numeric(AUC.XGboost.temporal@y.values)
+AUC.xgboost
